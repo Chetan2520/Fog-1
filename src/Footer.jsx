@@ -27,28 +27,25 @@ const Footer = () => {
   ];
 
   return (
-    <div className="bg-[#FAF3EA] py-16">
+    <div className="bg-[#FAF3EA] py-10 sm:py-16">
       <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 lg:gap-12">
           {features.map((feature, index) => {
             const IconComponent = feature.icon;
             return (
-              <div key={index} className="flex items-start space-x-4">
+              <div key={index} className="flex items-start space-x-3 sm:space-x-4">
                 {/* Icon */}
                 <div className="flex-shrink-0">
-                  <IconComponent 
-                    size={60} 
-                    className="text-black" 
-                    strokeWidth={1.5}
-                  />
+                  <IconComponent size={40} className="text-black sm:hidden" strokeWidth={1.5} />
+                  <IconComponent size={60} className="text-black hidden sm:block" strokeWidth={1.5} />
                 </div>
                 
                 {/* Content */}
                 <div className="flex-1">
-                  <h3 className="text-2xl font-semibold text-[#242424] mb-1">
+                  <h3 className="text-xl sm:text-2xl font-semibold text-[#242424] mb-1">
                     {feature.title}
                   </h3>
-                  <p className="text-[#898989] text-xl font-medium">
+                  <p className="text-[#898989] text-base sm:text-xl font-medium">
                     {feature.description}
                   </p>
                 </div>

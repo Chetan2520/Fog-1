@@ -1,178 +1,133 @@
-import { useState } from "react";
-import { Filter, Grid3X3, LayoutGrid, Heart, Share2, BarChart3, ChevronDown, X, Edit, Trash2 } from "lucide-react";
-import { FaArrowRightArrowLeft } from "react-icons/fa6";
+import { useState, useEffect } from "react";
+import { Filter, Grid3X3, LayoutGrid, BarChart3, ChevronDown } from "lucide-react";
+import AddProductPopup from "./components/AddProductPopup";
+import UpdateProductPopup from "./components/UpdateProductPopup";
+import ProductCard from "./components/ProductCard";
 
 const ProductGrid = () => {
   const [viewMode, setViewMode] = useState('grid');
   const [showCount, setShowCount] = useState(16);
   const [sortBy, setSortBy] = useState('Default');
+  const [sortOrder, setSortOrder] = useState('asc');
   const [showAddPopup, setShowAddPopup] = useState(false);
   const [showUpdatePopup, setShowUpdatePopup] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  // Initial product data - 16 products for grid display
-  const [products, setProducts] = useState([
-    {
-      id: 1,
-      name: "Syltherine",
-      description: "Stylish cafe chair",
-      price: 2500000,
-      originalPrice: 3500000,
-      image: "/product1.png",
-      discount: "-30%",
-      isNew: false
-    },
-    {
-      id: 2,
-      name: "Leviosa", 
-      description: "Stylish cafe chair",
-      price: 2500000,
-      originalPrice: null,
-      image: "/product2.png",
-      discount: null,
-      isNew: false
-    },
-    {
-      id: 3,
-      name: "Lolito",
-      description: "Luxury big sofa", 
-      price: 7000000,
-      originalPrice: 14000000,
-      image: "/product3.png",
-      discount: "-50%",
-      isNew: false
-    },
-    {
-      id: 4,
-      name: "Respira",
-      description: "Outdoor bar table and stool",
-      price: 500000,
-      originalPrice: null,
-      image: "/product4.jpg",
-      discount: null,
-      isNew: true
-    },
-    {
-      id: 5,
-      name: "Grifo",
-      description: "Night lamp",
-      price: 1500000,
-      originalPrice: null,
-      image: "/product1.png",
-      discount: null,
-      isNew: false
-    },
-    {
-      id: 6,
-      name: "Muggo",
-      description: "Small mug",
-      price: 150000,
-      originalPrice: null,
-      image: "/product2.png",
-      discount: null,
-      isNew: true
-    },
-    {
-      id: 7,
-      name: "Pingky",
-      description: "Cute bed set",
-      price: 7000000,
-      originalPrice: 14000000,
-      image: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=400&h=300&fit=crop",
-      discount: "-50%",
-      isNew: false
-    },
-    {
-      id: 8,
-      name: "Potty",
-      description: "Minimalist flower pot",
-      price: 500000,
-      originalPrice: null,
-      image: "https://images.unsplash.com/photo-1485955900006-10f4d324d411?w=400&h=300&fit=crop",
-      discount: null,
-      isNew: true
-    },
-    {
-      id: 9,
-      name: "Syltherine",
-      description: "Stylish cafe chair",
-      price: 2500000,
-      originalPrice: 3500000,
-      image: "/product1.png",
-      discount: "-30%",
-      isNew: false
-    },
-    {
-      id: 10,
-      name: "Leviosa", 
-      description: "Stylish cafe chair",
-      price: 2500000,
-      originalPrice: null,
-      image: "/product2.png",
-      discount: null,
-      isNew: false
-    },
-    {
-      id: 11,
-      name: "Lolito",
-      description: "Luxury big sofa", 
-      price: 7000000,
-      originalPrice: 14000000,
-      image: "/product2.png",
-      discount: "-50%",
-      isNew: false
-    },
-    {
-      id: 12,
-      name: "Respira",
-      description: "Outdoor bar table and stool",
-      price: 500000,
-      originalPrice: null,
-      image: "https://images.unsplash.com/photo-1574180566232-aaad1b5b8450?w=400&h=300&fit=crop",
-      discount: null,
-      isNew: true
-    },
-    {
-      id: 13,
-      name: "Grifo",
-      description: "Night lamp",
-      price: 1500000,
-      originalPrice: null,
-      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop",
-      discount: null,
-      isNew: false
-    },
-    {
-      id: 14,
-      name: "Muggo",
-      description: "Small mug",
-      price: 150000,
-      originalPrice: null,
-      image: "https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=400&h=300&fit=crop",
-      discount: null,
-      isNew: false
-    },
-    {
-      id: 15,
-      name: "Pingky",
-      description: "Cute bed set",
-      price: 7000000,
-      originalPrice: 14000000,
-      image: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=400&h=300&fit=crop",
-      discount: "-50%",
-      isNew: false
-    },
-    {
-      id: 16,
-      name: "Potty",
-      description: "Minimalist flower pot",
-      price: 500000,
-      originalPrice: null,
-      image: "https://images.unsplash.com/photo-1485955900006-10f4d324d411?w=400&h=300&fit=crop",
-      discount: null,
-      isNew: true
+  // Product data from backend
+  const [products, setProducts] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [brands, setBrands] = useState([]);
+  const [categories, setCategories] = useState([]);
+
+  // Filter states
+  const [filters, setFilters] = useState({
+    brand: '',
+    category: '',
+    minPrice: '',
+    maxPrice: '',
+    minNewPrice: '',
+    maxNewPrice: ''
+  });
+  const [showFilters, setShowFilters] = useState(false);
+
+  // Load products from backend
+  const loadProducts = async (page = currentPage) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Build query parameters
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: showCount.toString()
+      });
+
+      // Add sorting parameters
+      if (sortBy !== 'Default') {
+        params.append('sortBy', sortBy.toLowerCase());
+        params.append('sortOrder', sortOrder);
+      }
+
+      // Add filter parameters
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value) {
+          params.append(key, value);
+        }
+      });
+
+      const response = await fetch(`http://localhost:5000/api/products?${params.toString()}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      setProducts(data.products || []);
+      setTotal(data.total || 0);
+      setCurrentPage(data.page || 1);
+      setTotalPages(data.totalPages || 1);
+      setBrands(data.brands || []);
+      setCategories(data.categories || []);
+      
+      console.log('Products loaded:', data);
+    } catch (err) {
+      setError('Failed to load products');
+      console.error('Error loading products:', err);
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
+
+  // Load products on component mount and when dependencies change
+  useEffect(() => {
+    loadProducts(1); // Reset to page 1 when filters/sort change
+  }, [showCount, sortBy, sortOrder, filters]);
+
+  // Handle filter changes
+  const handleFilterChange = (key, value) => {
+    setFilters(prev => ({
+      ...prev,
+      [key]: value
+    }));
+    setCurrentPage(1); // Reset to page 1 when filter changes
+  };
+
+  // Handle sort changes
+  const handleSortChange = (newSortBy) => {
+    if (newSortBy === 'Default') {
+      setSortBy('Default');
+      setSortOrder('asc');
+    } else if (newSortBy === 'price-desc') {
+      setSortBy('price');
+      setSortOrder('desc');
+    } else {
+      setSortBy(newSortBy);
+      setSortOrder('asc');
+    }
+  };
+
+  // Handle pagination
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    loadProducts(page);
+  };
+
+  // Clear all filters
+  const clearFilters = () => {
+    setFilters({
+      brand: '',
+      category: '',
+      minPrice: '',
+      maxPrice: '',
+      minNewPrice: '',
+      maxNewPrice: ''
+    });
+    setCurrentPage(1);
+  };
 
   const formatPrice = (price) => {
     return `Rp ${price.toLocaleString()}`;
@@ -181,405 +136,50 @@ const ProductGrid = () => {
   // Static image for new products
   const defaultImage = "/product1.png";
 
-  const AddProductPopup = () => {
-    const [formData, setFormData] = useState({
-      name: '',
-      description: '',
-      price: '',
-      originalPrice: '',
-      discount: '',
-      isNew: false
-    });
 
-    const handleSubmit = (e) => {
-      e.preventDefault();
-      const newProduct = {
-        id: Math.max(...products.map(p => p.id)) + 1,
-        name: formData.name,
-        description: formData.description,
-        price: parseInt(formData.price),
-        originalPrice: formData.originalPrice ? parseInt(formData.originalPrice) : null,
-        image: defaultImage,
-        discount: formData.discount || null,
-        isNew: formData.isNew
-      };
+
+  const handleDeleteProduct = async (productId) => {
+    // Show confirmation dialog
+    const confirmed = window.confirm('Are you sure you want to delete this product? This action cannot be undone.');
+    
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      console.log('Attempting to delete product with ID:', productId);
       
-      setProducts([...products, newProduct]);
-      setShowAddPopup(false);
-      setFormData({
-        name: '',
-        description: '',
-        price: '',
-        originalPrice: '',
-        discount: '',
-        isNew: false
+      const response = await fetch(`http://localhost:5000/api/products/${productId}`, {
+        method: 'DELETE',
       });
-    };
-
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
-          <div className="flex justify-between items-center p-6 border-b">
-            <h2 className="text-xl font-semibold text-gray-800">Add New Product</h2>
-            <button
-              onClick={() => setShowAddPopup(false)}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              <X size={20} />
-            </button>
-          </div>
-          
-          <form onSubmit={handleSubmit} className="p-6 space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Product Name
-              </label>
-              <input
-                type="text"
-                required
-                value={formData.name}
-                onChange={(e) => setFormData({...formData, name: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#B88E2F]"
-                placeholder="Enter product name"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Description
-              </label>
-              <textarea
-                required
-                value={formData.description}
-                onChange={(e) => setFormData({...formData, description: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#B88E2F]"
-                placeholder="Enter product description"
-                rows={3}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Price
-              </label>
-              <input
-                type="number"
-                required
-                value={formData.price}
-                onChange={(e) => setFormData({...formData, price: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#B88E2F]"
-                placeholder="Enter price"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Original Price (Optional)
-              </label>
-              <input
-                type="number"
-                value={formData.originalPrice}
-                onChange={(e) => setFormData({...formData, originalPrice: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#B88E2F]"
-                placeholder="Enter original price"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Discount (Optional)
-              </label>
-              <input
-                type="text"
-                value={formData.discount}
-                onChange={(e) => setFormData({...formData, discount: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#B88E2F]"
-                placeholder="e.g., -30%"
-              />
-            </div>
-
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                checked={formData.isNew}
-                onChange={(e) => setFormData({...formData, isNew: e.target.checked})}
-                className="w-4 h-4 text-[#B88E2F] border-gray-300 rounded focus:ring-[#B88E2F]"
-              />
-              <label className="ml-2 text-sm font-medium text-gray-700">
-                Mark as New Product
-              </label>
-            </div>
-
-            <div className="flex space-x-3 pt-4">
-              <button
-                type="button"
-                onClick={() => setShowAddPopup(false)}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="flex-1 px-4 py-2 bg-[#B88E2F] text-white rounded-md hover:bg-[#A17B28]"
-              >
-                Add Product
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    );
-  };
-
-  const UpdateProductPopup = () => {
-    const [formData, setFormData] = useState({
-      name: selectedProduct?.name || '',
-      description: selectedProduct?.description || '',
-      price: selectedProduct?.price || '',
-      originalPrice: selectedProduct?.originalPrice || '',
-      discount: selectedProduct?.discount || '',
-      isNew: selectedProduct?.isNew || false
-    });
-
-    const handleSubmit = (e) => {
-      e.preventDefault();
-      const updatedProduct = {
-        ...selectedProduct,
-        name: formData.name,
-        description: formData.description,
-        price: parseInt(formData.price),
-        originalPrice: formData.originalPrice ? parseInt(formData.originalPrice) : null,
-        discount: formData.discount || null,
-        isNew: formData.isNew
-      };
       
-      setProducts(products.map(p => p.id === selectedProduct.id ? updatedProduct : p));
-      setShowUpdatePopup(false);
-      setSelectedProduct(null);
-    };
-
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
-          <div className="flex justify-between items-center p-6 border-b">
-            <h2 className="text-xl font-semibold text-gray-800">Update Product</h2>
-            <button
-              onClick={() => {
-                setShowUpdatePopup(false);
-                setSelectedProduct(null);
-              }}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              <X size={20} />
-            </button>
-          </div>
-          
-          <form onSubmit={handleSubmit} className="p-6 space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Product Name
-              </label>
-              <input
-                type="text"
-                required
-                value={formData.name}
-                onChange={(e) => setFormData({...formData, name: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#B88E2F]"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Description
-              </label>
-              <textarea
-                required
-                value={formData.description}
-                onChange={(e) => setFormData({...formData, description: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#B88E2F]"
-                rows={3}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Price
-              </label>
-              <input
-                type="number"
-                required
-                value={formData.price}
-                onChange={(e) => setFormData({...formData, price: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#B88E2F]"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Original Price (Optional)
-              </label>
-              <input
-                type="number"
-                value={formData.originalPrice}
-                onChange={(e) => setFormData({...formData, originalPrice: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#B88E2F]"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Discount (Optional)
-              </label>
-              <input
-                type="text"
-                value={formData.discount}
-                onChange={(e) => setFormData({...formData, discount: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#B88E2F]"
-              />
-            </div>
-
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                checked={formData.isNew}
-                onChange={(e) => setFormData({...formData, isNew: e.target.checked})}
-                className="w-4 h-4 text-[#B88E2F] border-gray-300 rounded focus:ring-[#B88E2F]"
-              />
-              <label className="ml-2 text-sm font-medium text-gray-700">
-                Mark as New Product
-              </label>
-            </div>
-
-            <div className="flex space-x-3 pt-4">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowUpdatePopup(false);
-                  setSelectedProduct(null);
-                }}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="flex-1 px-4 py-2 bg-[#B88E2F] text-white rounded-md hover:bg-[#A17B28]"
-              >
-                Update Product
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    );
+      console.log('Delete response status:', response.status);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Delete error response:', errorData);
+        throw new Error(`HTTP error! status: ${response.status} - ${errorData.error || 'Unknown error'}`);
+      }
+      
+      const result = await response.json();
+      console.log('Delete successful:', result);
+      
+      // Remove product from frontend state
+      setProducts(products.filter(p => p._id !== productId && p.id !== productId));
+      
+      // Reload products to ensure consistency
+      await loadProducts();
+      
+      console.log('Product deleted successfully');
+    } catch (error) {
+      setError('Failed to delete product');
+      console.error('Error deleting product:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDeleteProduct = (productId) => {
-    setProducts(products.filter(p => p.id !== productId));
-  };
-
-  const ProductCard = ({ product }) => {
-    const [isHovered, setIsHovered] = useState(false);
-  
-    return (
-      <div
-        className="relative bg-white group h-auto w-full cursor-pointer"
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-      >
-        {/* Product Image */}
-        <div className="relative overflow-hidden">
-          <img
-            src={product.image}
-            alt={product.name}
-            className="w-full h-48 sm:h-64 lg:h-72 object-cover"
-          />
-  
-          {/* Discount Badge */}
-          {product.discount && (
-            <div className="absolute top-3 right-3 sm:top-6 sm:right-6 bg-[#E97171] flex items-center justify-center h-8 w-8 sm:h-12 sm:w-12 text-white text-xs sm:text-base font-medium rounded-full">
-              {product.discount}
-            </div>
-          )}
-  
-          {/* New Badge */}
-          {product.isNew && (
-            <div className="absolute top-3 right-3 sm:top-6 sm:right-6 bg-[#2EC1AC] flex items-center justify-center h-8 w-8 sm:h-12 sm:w-12 text-white text-xs sm:text-base font-medium rounded-full">
-              New
-            </div>
-          )}
-
-          {/* Update/Delete Icons - Show on hover */}
-          {isHovered && (
-            <div className="absolute top-3 left-3 sm:top-6 sm:left-6 flex space-x-2">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setSelectedProduct(product);
-                  setShowUpdatePopup(true);
-                }}
-                className="bg-white bg-opacity-90 hover:bg-opacity-100 p-2 rounded-full transition-all"
-              >
-                <Edit size={16} className="text-blue-600" />
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDeleteProduct(product.id);
-                }}
-                className="bg-white bg-opacity-90 hover:bg-opacity-100 p-2 rounded-full transition-all"
-              >
-                <Trash2 size={16} className="text-red-600" />
-              </button>
-            </div>
-          )}
-        </div>
-  
-        {/* Product Info */}
-        <div className="p-3 sm:p-6 bg-[#F4F5F7]">
-          <h3 className="font-semibold text-[#3A3A3A] text-lg sm:text-2xl mb-2">{product.name}</h3>
-          <p className="text-[#898989] text-sm sm:text-base font-medium mb-4">
-            {product.description}
-          </p>
-  
-          <div className="flex items-center space-x-2 sm:space-x-4">
-            <span className="font-semibold text-[#3A3A3A] text-base sm:text-xl">
-              {formatPrice(product.price)}
-            </span>
-            {product.originalPrice && (
-              <span className="text-[#B0B0B0] line-through font-normal text-sm sm:text-base">
-                {formatPrice(product.originalPrice)}
-              </span>
-            )}
-          </div>
-        </div>
-  
-        {/* FULL CARD Hover Overlay */}
-        {isHovered && (
-          <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center space-y-4 sm:space-y-6 transition-all duration-300">
-            <button className="bg-white text-[#B88E2F] font-semibold px-6 sm:px-12 py-2 sm:py-3 text-sm sm:text-base hover:bg-gray-50 transition-colors">
-              Add to cart
-            </button>
-  
-            <div className="flex items-center space-x-3 sm:space-x-6 text-white font-medium text-sm sm:text-base">
-              <button className="flex items-center space-x-1 sm:space-x-2 hover:text-amber-300 transition-colors">
-                <Share2 size={16} />
-                <span>Share</span>
-              </button>
-              <button className="flex items-center space-x-1 sm:space-x-2 hover:text-amber-300 transition-colors">
-                <FaArrowRightArrowLeft size={16} />
-                <span>Compare</span>
-              </button>
-              <button className="flex items-center space-x-1 sm:space-x-2 hover:text-amber-300 transition-colors">
-                <Heart size={16} />
-                <span>Like</span>
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
   
 
   return (
@@ -591,8 +191,11 @@ const ProductGrid = () => {
             
             {/* Left side - Filter and View options */}
             <div className="flex items-center space-x-4 sm:space-x-8">
-              <button className="flex items-center space-x-2 text-gray-800 hover:text-black">
-                <Filter size={18} sm:size={20} />
+              <button 
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center space-x-2 text-gray-800 hover:text-black"
+              >
+                <Filter size={20} />
                 <span className="font-medium text-sm sm:text-base">Filter</span>
               </button>
               
@@ -613,7 +216,7 @@ const ProductGrid = () => {
               </div>
               
               <div className="hidden md:block text-gray-800 text-sm sm:text-base font-medium">
-                Showing 1–{Math.min(showCount, products.length)} of {products.length} results
+                Showing {products.length} of {total} results
               </div>
             </div>
 
@@ -646,13 +249,13 @@ const ProductGrid = () => {
                 <span className="text-black font-normal text-sm sm:text-xl">Sort by</span>
                 <select 
                   value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
+                  onChange={(e) => handleSortChange(e.target.value)}
                   className="px-2 sm:px-4 py-1 sm:py-2 bg-white font-medium text-[#9F9F9F] text-sm sm:text-xl border border-gray-300 rounded"
                 >
                   <option value="Default">Default</option>
-                  <option value="Price: Low to High">Price: Low to High</option>
-                  <option value="Price: High to Low">Price: High to Low</option>
-                  <option value="Newest">Newest</option>
+                  <option value="brand">Brand Name</option>
+                  <option value="price">Price: Low to High</option>
+                  <option value="price-desc">Price: High to Low</option>
                 </select>
               </div>
             </div>
@@ -660,37 +263,182 @@ const ProductGrid = () => {
         </div>
       </div>
 
+      {/* Filter Panel */}
+      {showFilters && (
+        <div className="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-4">
+          <div className="max-w-7xl mx-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Brand Filter */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Brand</label>
+                <select
+                  value={filters.brand}
+                  onChange={(e) => handleFilterChange('brand', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#B88E2F]"
+                >
+                  <option value="">All Brands</option>
+                  {brands.map(brand => (
+                    <option key={brand} value={brand}>{brand}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Category Filter */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                <select
+                  value={filters.category}
+                  onChange={(e) => handleFilterChange('category', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#B88E2F]"
+                >
+                  <option value="">All Categories</option>
+                  {categories.map(category => (
+                    <option key={category} value={category}>{category}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Min Price Filter */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Min Price</label>
+                <input
+                  type="number"
+                  value={filters.minNewPrice}
+                  onChange={(e) => handleFilterChange('minNewPrice', e.target.value)}
+                  placeholder="Min price"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#B88E2F]"
+                />
+              </div>
+
+              {/* Max Price Filter */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Max Price</label>
+                <input
+                  type="number"
+                  value={filters.maxNewPrice}
+                  onChange={(e) => handleFilterChange('maxNewPrice', e.target.value)}
+                  placeholder="Max price"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#B88E2F]"
+                />
+              </div>
+            </div>
+
+            {/* Clear Filters Button */}
+            <div className="flex justify-end mt-4">
+              <button
+                onClick={clearFilters}
+                className="px-4 py-2 text-sm text-[#B88E2F] hover:text-amber-700 font-medium border border-[#B88E2F] rounded-md hover:bg-[#F9F1E7] transition-colors"
+              >
+                Clear All Filters
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Product Grid */}
       <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-28 py-8 sm:py-12">
+        {/* Loading State */}
+        {loading && (
+          <div className="flex justify-center items-center py-12">
+            <div className="text-lg text-gray-600">Loading products...</div>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && !loading && (
+          <div className="flex justify-center items-center py-12">
+            <div className="text-lg text-red-600">{error}</div>
+          </div>
+        )}
+
         {/* Product Grid - Responsive */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 xl:gap-10">
-          {products.slice(0, showCount).map(product => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
+        {!loading && !error && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 xl:gap-10">
+            {products.slice(0, showCount).map(product => (
+              <ProductCard 
+                key={product._id || product.id} 
+                product={product}
+                setSelectedProduct={setSelectedProduct}
+                setShowUpdatePopup={setShowUpdatePopup}
+                handleDeleteProduct={handleDeleteProduct}
+                formatPrice={formatPrice}
+              />
+            ))}
+          </div>
+        )}
 
         {/* Pagination */}
         <div className="flex justify-center items-center gap-3 sm:gap-7 mt-12 sm:mt-16">
-          <button className="w-10 h-10 sm:w-[60px] sm:h-[60px] bg-[#B88E2F] text-white rounded-md sm:rounded-[10px] cursor-pointer flex items-center justify-center font-normal text-sm sm:text-xl">
-            1
+          {/* Previous Button */}
+          <button 
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="w-12 h-10 sm:w-[60px] sm:h-[60px] bg-[#F9F1E7] text-sm sm:text-xl text-black rounded-md sm:rounded-[10px] cursor-pointer flex items-center justify-center font-normal disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Prev
           </button>
-          <button className="w-10 h-10 sm:w-[60px] sm:h-[60px] bg-[#F9F1E7] text-black text-sm sm:text-xl rounded-md sm:rounded-[10px] cursor-pointer flex items-center justify-center font-normal">
-            2
-          </button>
-          <button className="w-10 h-10 sm:w-[60px] sm:h-[60px] bg-[#F9F1E7] text-black text-sm sm:text-xl rounded-md sm:rounded-[10px] cursor-pointer flex items-center justify-center font-normal">
-            3
-          </button>
-          <button className="w-12 h-10 sm:w-[60px] sm:h-[60px] bg-[#F9F1E7] text-sm sm:text-xl text-black rounded-md sm:rounded-[10px] cursor-pointer flex items-center justify-center font-normal">
+
+          {/* Page Numbers */}
+          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+            let pageNum;
+            if (totalPages <= 5) {
+              pageNum = i + 1;
+            } else if (currentPage <= 3) {
+              pageNum = i + 1;
+            } else if (currentPage >= totalPages - 2) {
+              pageNum = totalPages - 4 + i;
+            } else {
+              pageNum = currentPage - 2 + i;
+            }
+
+            return (
+              <button
+                key={pageNum}
+                onClick={() => handlePageChange(pageNum)}
+                className={`w-10 h-10 sm:w-[60px] sm:h-[60px] rounded-md sm:rounded-[10px] cursor-pointer flex items-center justify-center font-normal text-sm sm:text-xl ${
+                  currentPage === pageNum
+                    ? 'bg-[#B88E2F] text-white'
+                    : 'bg-[#F9F1E7] text-black hover:bg-[#E6D7C3]'
+                }`}
+              >
+                {pageNum}
+              </button>
+            );
+          })}
+
+          {/* Next Button */}
+          <button 
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="w-12 h-10 sm:w-[60px] sm:h-[60px] bg-[#F9F1E7] text-sm sm:text-xl text-black rounded-md sm:rounded-[10px] cursor-pointer flex items-center justify-center font-normal disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             Next
           </button>
         </div>
       </div>
 
       {/* Add Product Popup */}
-      {showAddPopup && <AddProductPopup />}
+      {showAddPopup && (
+        <AddProductPopup 
+          setShowAddPopup={setShowAddPopup}
+          setLoading={setLoading}
+          setError={setError}
+          loadProducts={loadProducts}
+          defaultImage={defaultImage}
+        />
+      )}
 
       {/* Update Product Popup */}
-      {showUpdatePopup && <UpdateProductPopup />}
+      {showUpdatePopup && (
+        <UpdateProductPopup 
+          selectedProduct={selectedProduct}
+          setShowUpdatePopup={setShowUpdatePopup}
+          setSelectedProduct={setSelectedProduct}
+          setProducts={setProducts}
+          products={products}
+        />
+      )}
     </div>
   );
 };
