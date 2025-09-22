@@ -237,7 +237,7 @@ const ProductGrid = () => {
                 <select 
                   value={showCount}
                   onChange={(e) => setShowCount(Number(e.target.value))}
-                  className="text-[#9F9F9F] text-sm sm:text-xl px-2 sm:px-4 py-1 sm:py-2 bg-white border border-gray-300 rounded font-normal"
+                  className="text-[#9F9F9F] appearance-none text-sm sm:text-xl px-2 sm:px-4 py-1 sm:py-2 bg-white border border-gray-300 rounded font-normal"
                 >
                   <option value={16}>16</option>
                   <option value={32}>32</option>
@@ -246,11 +246,11 @@ const ProductGrid = () => {
               </div>
               
               <div className="flex items-center space-x-3">
-                <span className="text-black font-normal text-sm sm:text-xl">Sort by</span>
+                <span className="text-black font-normal text-sm  sm:text-xl">Sort by</span>
                 <select 
                   value={sortBy}
                   onChange={(e) => handleSortChange(e.target.value)}
-                  className="px-2 sm:px-4 py-1 sm:py-2 bg-white font-medium text-[#9F9F9F] text-sm sm:text-xl border border-gray-300 rounded"
+                  className="px-2 sm:px-4 py-1 sm:py-2 appearance-none bg-white  text-[#9F9F9F] text-sm sm:text-xl border border-gray-300 rounded"
                 >
                   <option value="Default">Default</option>
                   <option value="brand">Brand Name</option>
