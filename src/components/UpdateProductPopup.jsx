@@ -34,7 +34,7 @@ const UpdateProductPopup = ({
         isNew: formData.isNew
       };
 
-      const response = await fetch(`http://localhost:5000/api/products/${selectedProduct._id || selectedProduct.id}`, {
+      const response = await fetch(`https://fog-backend-k9mm.onrender.com/api/products/${selectedProduct._id || selectedProduct.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedProduct),

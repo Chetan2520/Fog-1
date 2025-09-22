@@ -37,7 +37,7 @@ cd Backend
 npm install
 npm run start
 ```
-API base URL defaults to `http://localhost:5000`.
+API base URL defaults to `https://fog-backend-k9mm.onrender.com`.
 
 ### Environment Variables
 Create `Backend/.env`:
@@ -56,7 +56,7 @@ Backend (inside `Backend`):
 - `npm run start`: start server with nodemon
 
 ### API Reference
-Base URL: `http://localhost:5000/api/products`
+Base URL: `https://fog-backend-k9mm.onrender.com/api/products`
 
 - GET `/test`
   - Response: `{ message, timestamp }` – health check

@@ -59,7 +59,7 @@ const ProductGrid = () => {
         }
       });
 
-      const response = await fetch(`http://localhost:5000/api/products?${params.toString()}`);
+      const response = await fetch(`https://fog-backend-k9mm.onrender.com/api/products?${params.toString()}`);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -150,7 +150,7 @@ const ProductGrid = () => {
       setLoading(true);
       console.log('Attempting to delete product with ID:', productId);
       
-      const response = await fetch(`http://localhost:5000/api/products/${productId}`, {
+      const response = await fetch(`https://fog-backend-k9mm.onrender.com/api/products/${productId}`, {
         method: 'DELETE',
       });
       
